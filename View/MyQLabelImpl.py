@@ -23,7 +23,7 @@ class MyQLabel(QLabel):
 
     # 使用普通图片刷新刷新label
     def refreshCommon(self):
-        print("label已被触发")
+
         try:
 
             self.setPixmap(QPixmap().fromImage(self.image))

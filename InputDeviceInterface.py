@@ -31,7 +31,6 @@ class GrayThread(threading.Thread):
                 # self.channel.threadCtl[2].acquire()
                 self.channel.frame[1] = cv2.cvtColor(org, cv2.COLOR_BGR2GRAY)
                 # self.channel.threadCtl[2].release()
-
                 self.channel.threadEvent[0].clear()
                 # 灰度图已处理完，通知相关线程
                 self.channel.threadEvent[1].set()
@@ -41,7 +40,7 @@ class GrayThread(threading.Thread):
 
 
 
-class OrgThread(threading.Thread):
+class CameraOrgThread(threading.Thread):
 
     def __init__(self, channel=None, cap=None):
         threading.Thread.__init__(self)
@@ -53,22 +52,60 @@ class OrgThread(threading.Thread):
         self.cap.release()
 
     def run(self):
-        print("InputDevice类.OrgThread已打开")
+        print("InputDevice类.CameraOrgThread已打开")
         try:
             while True:
-                start = time.time()
+
                 # 输入原图
                 ret, org = self.cap.read()
                 # 通知获取原图
                 # 优先Label输出
                 self.channel.channelDict[self.channel.channelID]["frame"][0] = org
                 self.channel.channelDict[self.channel.channelID]["RefreshThreadEvent"].set()
-                end = time.time()
-                print("原图处理时间为:{0}".format(end - start))
+
+
                 # 通知灰度处理
                 self.channel.frame[0] = org
                 self.channel.threadEvent[0].set()
 
+                # 等待优先图输出
+                # self.channel.threadEvent[2].wait()
+        except:
+            error = traceback.fromat_exc()
+            raise Exception(error)
+
+class VideoOrgThread(threading.Thread):
+
+    def __init__(self, channel=None, cap=None):
+        threading.Thread.__init__(self)
+        self.daemon = True
+        self.channel = channel
+        self.cap = cap
+
+    def __del__(self):
+        self.cap.release()
+
+    def run(self):
+        print("InputDevice类.VideoOrgThread已打开")
+        try:
+            while True:
+                # 输入原图
+                ret, org = self.cap.read()
+
+                if ret:
+                    # 通知获取原图
+                    # 优先Label输出
+                    time.sleep(0.03)
+                    self.channel.channelDict[self.channel.channelID]["frame"][0] = org
+                    self.channel.channelDict[self.channel.channelID]["RefreshThreadEvent"].set()
+
+
+                    # 通知灰度处理
+                    self.channel.frame[0] = org
+                    self.channel.threadEvent[0].set()
+                else:
+                    # 重新播放
+                    self.cap.set(cv2.CAP_PROP_POS_FRAMES,0)
                 # 等待优先图输出
                 # self.channel.threadEvent[2].wait()
         except:
@@ -102,7 +139,7 @@ class Camera(InputDevice):
         # 先打开摄像头
         self.cap = cv2.VideoCapture(self.local_device_id)
         # 线程
-        self.orgThread = OrgThread()
+        self.orgThread = CameraOrgThread()
         self.grayThread = GrayThread()
 
     def __del__(self):
@@ -118,21 +155,13 @@ class Camera(InputDevice):
         self.orgThread.cap = self.cap
 
     def open(self):
-        # 打开摄像头
-        # self.cap = cv2.VideoCapture(self.local_device_id)
-        # 打开获取原图线程
+
 
         # 打开摄像头输入线程
         self.orgThread.start()
         # 打开灰度处理线程
         self.grayThread.start()
 
-    # 将原始图片传入channelFrame[1]
-    # def read(self):
-    #
-    #     self.channel.threadCtl[1].acquire()
-    #     ret, self.channel.frame[1] = self.cap.read()
-    #     self.channel.threadCtl[1].release()
 
 
 
@@ -141,8 +170,31 @@ class Camera(InputDevice):
 # 视频
 class Video(InputDevice):
 
-    def __init__(self):
+    def __init__(self,fileAddr):
         super().__init__()
+        # 初始化视频
+        self.cap = cv2.VideoCapture("video/{0}".format(fileAddr))
+        print("video/{0}".format(fileAddr))
+
+        #线程
+        self.videoThread = VideoOrgThread()
+        self.grayThread = GrayThread()
+
+    def setChannel(self, channel):
+        self.channel = channel
+
+        self.grayThread.channel = channel
+
+        self.videoThread.channel = channel
+        self.videoThread.cap = self.cap
+
+    def open(self):
+
+        # 打开摄像头输入线程
+        self.videoThread.start()
+        # 打开灰度处理线程
+        self.grayThread.start()
+
 
 
 # 网络摄像头

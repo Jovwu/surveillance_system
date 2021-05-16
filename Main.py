@@ -49,6 +49,9 @@ class RefreshThread(QThread):
         # 设置自己的label
         self.label = self.labelDict["C_label"][self.channelID]
 
+        # 设置label的通道
+        self.label.channelID = channelID
+
         # 连接信号
         self.signal.connect(self.label.refreshCommon)
         #
@@ -70,6 +73,8 @@ class RefreshThread(QThread):
             self.label = self.labelDict["C_label"][self.channelID]
         elif flag == 3:
             self.label = self.labelDict["A_label"][self.channelID]
+        # 设置label的通道
+        self.label.channelID = channelID
         # 重新连接
         self.signal.connect(self.label.refreshCommon)
 
@@ -114,7 +119,7 @@ class RefreshThread(QThread):
         org = self.channelDict[self.channelID]["frame"][0]
 
         # 图片转换
-        print(self.labelSize)
+
         shrink = cv2.resize(org, self.labelSize, interpolation=cv2.INTER_AREA)
 
         # 更改编码
@@ -234,28 +239,35 @@ if __name__ == '__main__':
     LabelDict["labelClass"]["dormin"] = CDI.getAllChannelIDByClass(3)
     LabelDict["labelClass"]["dormout"] = CDI.getAllChannelIDByClass(4)
 
-
+    print("创建通道字典")
+    CHANNEL_DICT = MANAGE.dict()
+    print("创建通道刷新线程字典")
+    ChannelRefreshThreadDict = dict()
     # 加载所有页面
     # 实例化窗口
-    mainWin = MyMainForm(LabelDict)
+    mainWin = MyMainForm(LabelDict,CHANNEL_DICT,ChannelRefreshThreadDict)
     # 将窗口控件显示在屏幕上
+    # 第二次初始化
     mainWin.show()
 
     # 开始加载通道
     print("正在初始化...")
 
-    print("创建通道字典")
-    CHANNEL_DICT = MANAGE.dict()
+
 
     print("创建进程池")
-    PROCESS_POOL = MANAGE.Pool(processes=6)
+    # 获取所需进程数量
+    processCount = len(LabelDict["labelClass"]["all"])
+    PROCESS_POOL = MANAGE.Pool(processes=processCount)
 
-    print("创建通道刷新线程字典")
-    ChannelRefreshThreadDict = dict()
+
 
     print("初始化所有通道")
     createAllChannel(CHANNEL_DICT,PROCESS_POOL,MANAGE,LabelDict,ChannelRefreshThreadDict)
     print(LabelDict)
+
+    # 再次更新界面
+    mainWin.setChannel()
 
     # 总label
     # 绑定mylabel
