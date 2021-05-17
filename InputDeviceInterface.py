@@ -5,6 +5,8 @@ import traceback
 import cv2
 import numpy as np
 
+from face import imageFile2Numpy
+
 
 class GrayThread(threading.Thread):
 
@@ -20,18 +22,14 @@ class GrayThread(threading.Thread):
             while True:
                 # 等待原图输入
                 self.channel.threadEvent[0].wait()
-
                 # 获取原图
-                # self.channel.threadCtl[1].acquire()
                 org = self.channel.frame[0]
-                # self.channel.threadCtl[1].release()
-
-                print("灰度处理已得图")
-                # 写入灰度图
-                # self.channel.threadCtl[2].acquire()
-                self.channel.frame[1] = cv2.cvtColor(org, cv2.COLOR_BGR2GRAY)
-                # self.channel.threadCtl[2].release()
                 self.channel.threadEvent[0].clear()
+
+                # 写入灰度图
+                self.channel.frame[1] = cv2.cvtColor(org, cv2.COLOR_BGR2RGB)
+
+
                 # 灰度图已处理完，通知相关线程
                 self.channel.threadEvent[1].set()
         except:
@@ -59,17 +57,17 @@ class CameraOrgThread(threading.Thread):
                 # 输入原图
                 ret, org = self.cap.read()
                 # 通知获取原图
-                # 优先Label输出
+
+                # 通知Label输出
                 self.channel.channelDict[self.channel.channelID]["frame"][0] = org
                 self.channel.channelDict[self.channel.channelID]["RefreshThreadEvent"].set()
-
 
                 # 通知灰度处理
                 self.channel.frame[0] = org
                 self.channel.threadEvent[0].set()
 
-                # 等待优先图输出
-                # self.channel.threadEvent[2].wait()
+                # 等待前台获取优先图
+                self.channel.channelDict[self.channel.channelID]["RefreshThreadEvent"].wait()
         except:
             error = traceback.fromat_exc()
             raise Exception(error)
@@ -95,7 +93,6 @@ class VideoOrgThread(threading.Thread):
                 if ret:
                     # 通知获取原图
                     # 优先Label输出
-                    time.sleep(0.03)
                     self.channel.channelDict[self.channel.channelID]["frame"][0] = org
                     self.channel.channelDict[self.channel.channelID]["RefreshThreadEvent"].set()
 
@@ -103,6 +100,9 @@ class VideoOrgThread(threading.Thread):
                     # 通知灰度处理
                     self.channel.frame[0] = org
                     self.channel.threadEvent[0].set()
+
+                    # 等待前台获取优先图
+                    self.channel.channelDict[self.channel.channelID]["RefreshThreadEvent"].wait()
                 else:
                     # 重新播放
                     self.cap.set(cv2.CAP_PROP_POS_FRAMES,0)

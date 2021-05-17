@@ -24,11 +24,17 @@ from View.MyQLabelImpl import MyQLabel
 from View.TestUI import TestWin
 from View.main_win import MyMainForm
 from channel_dao_impl import ChannelDaoImpl
+from person_dao_impl import PersonDaoImpl
+
+
 class RefreshThread(QThread):
     signal = pyqtSignal()
 
     def __init__(self, channelID,channelDict,labelDict,ChannelRefreshThreadDict):
         super(RefreshThread, self).__init__()
+
+
+
         self.daemon = True
 
         self.labelSize = None
@@ -62,6 +68,8 @@ class RefreshThread(QThread):
 
     def setLabelFlag(self,flag):
 
+
+
         # 断开原来的信号连接
         self.signal.disconnect(self.label.refreshCommon)
         # 设置标志位
@@ -75,8 +83,12 @@ class RefreshThread(QThread):
             self.label = self.labelDict["A_label"][self.channelID]
         # 设置label的通道
         self.label.channelID = channelID
+        # 设置Labelsize
+        self.labelSize = (int(self.label.width()), int(self.label.height()))
         # 重新连接
         self.signal.connect(self.label.refreshCommon)
+
+
 
     def run(self):
         print("{0}通道的RefreshThread已经打开！".format(self.channelID))
@@ -90,20 +102,24 @@ class RefreshThread(QThread):
 
                 # 等待唤醒
                 self.channelDict[self.channelID]["RefreshThreadEvent"].wait()
+
                 cur_time = time.time()
                 print("距离上次唤醒时间：{0}".format(cur_time-last_time))
                 last_time = cur_time
 
                 start = time.time()
+
                 self.org2Image()
                 # 添加水印 -》有的话
                 # 延时
                 time.sleep(0.01)
                 # 发送信号
                 self.signal.emit()
+
                 end = time.time()
                 print("本次图像处理共耗时{0}".format(end - start))
-                self.channelDict[self.channelID]["RefreshThreadEvent"].clear()
+
+
 
 
         except:
@@ -114,12 +130,11 @@ class RefreshThread(QThread):
 
     def org2Image(self):
 
-
         # 获得原图
         org = self.channelDict[self.channelID]["frame"][0]
-
+        # 获得原图后发送通知
+        self.channelDict[self.channelID]["RefreshThreadEvent"].set()
         # 图片转换
-
         shrink = cv2.resize(org, self.labelSize, interpolation=cv2.INTER_AREA)
 
         # 更改编码
@@ -180,12 +195,10 @@ def createAllChannel(channelDict,PROCESS_POOL,MANAGE,labelAndChannelDict,Channel
         channelDict[channel[0]]["info"].append(channel[5])# mode
         channelDict[channel[0]]["info"].append(featuresList) # features
 
+        print("基本信息为{0}".format(channelDict[channel[0]]["info"]))
+
         # 初始化frame信息
         channelDict[channel[0]]["frame"].append(0) # org
-
-        # 初始化watermark
-        print("创建时候的全部字典{0}".format(channelDict))
-        print("创建时候的通道字典{0}".format(channelDict[channel[0]]))
 
         # 初始化所有线程控制
         channelDict[channel[0]]["ChannelCtrThreadContent"].append(0)  # 通道控制命令
@@ -224,6 +237,22 @@ if __name__ == '__main__':
     MANAGE = multiprocessing.Manager()
     print("创建数据库实例")
     CDI = ChannelDaoImpl()
+    PDI = PersonDaoImpl()
+
+    print("创建通道字典")
+    CHANNEL_DICT = MANAGE.dict()
+    CHANNEL_DICT["features"] = MANAGE.dict()
+    CHANNEL_DICT["mode"] = MANAGE.dict()
+    CHANNEL_DICT["personClass"] = MANAGE.dict()
+    CHANNEL_DICT["faceLib"] = MANAGE.dict()
+
+    # 初始化字典内容
+    CHANNEL_DICT["features"] = CDI.getChannelServiceClass("features")
+    CHANNEL_DICT["mode"] = CDI.getChannelServiceClass("mode")
+    CHANNEL_DICT["personClass"] = CDI.getChannelServiceClass("personClass")
+    # 加载全局人脸库
+    CHANNEL_DICT["faceLib"] = PDI.getAllPersonFace()
+
 
     print("全局Label字典创建")
     LabelDict = dict()
@@ -239,8 +268,9 @@ if __name__ == '__main__':
     LabelDict["labelClass"]["dormin"] = CDI.getAllChannelIDByClass(3)
     LabelDict["labelClass"]["dormout"] = CDI.getAllChannelIDByClass(4)
 
-    print("创建通道字典")
-    CHANNEL_DICT = MANAGE.dict()
+    # 初始化字典内容
+
+
     print("创建通道刷新线程字典")
     ChannelRefreshThreadDict = dict()
     # 加载所有页面
@@ -250,10 +280,12 @@ if __name__ == '__main__':
     # 第二次初始化
     mainWin.show()
 
+    # 创建添加人员页面
+
+
+
     # 开始加载通道
     print("正在初始化...")
-
-
 
     print("创建进程池")
     # 获取所需进程数量

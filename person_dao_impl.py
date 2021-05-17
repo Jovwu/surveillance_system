@@ -1,9 +1,9 @@
 import traceback
 
 import cv2
+import numpy
 
 import sql_base as sql_base
-import global_var_model as gl
 import model as model
 import sqlite3
 
@@ -26,14 +26,12 @@ class PersonDaoImpl:
     # 添加人员
     def addPerson(self,person):
 
-        image = cv2.imread("image/拜登1.jpg")
+
+        sql = "INSERT INTO person ({0[1]},{0[2]},{0[3]},{0[4]}) VALUES ('{1}', '{2}', {3}, '{4}')"\
+            .format(model.person_col, person.faceid, person.name, person.class_id, person.pic)
 
 
-        sql = "INSERT INTO person ({0[1]},{0[2]},{0[3]},{0[4]}) VALUES ({1}, {2}, {3}, {4})"\
-            .format(model.person_col, person.faceid, person.name, person.class_id, sqlite3.Binary(image))
 
-
-        print(sql)
 
         try:
             self.__conn.execute(sql)
@@ -59,32 +57,51 @@ class PersonDaoImpl:
 
         return True
 
+    # 加载全局人脸库
+    def getAllPersonFace(self):
+
+        sql = "SELECT person_id,person_faceid FROM person"
+
+        result = dict()
+        for row in self.__conn.execute(sql):
+            result[row[0]] = numpy.fromstring(row[1][1:-2], dtype=float, sep=' ')
+        return result
+
+    # 加载最后一条记录
+    def getLastPersonFace(self):
+
+        sql = "SELECT * FROM person ORDER BY person_id DESC LIMIT 1;"
+
+        result = dict()
+        for row in self.__conn.execute(sql):
+            result[row[0]] = numpy.fromstring(row[1][1:-2], dtype=float, sep=' ')
+        return result
 
     # 根据姓名查找指定人员（模糊搜索）
 
     # 查找指定人员
 
     # 返回所有人脸ID->用字典对应{"id":"faceid"}
-    def updateGlFaceLib(self):
-
-        # 先判断是更新最新记录还是全部记录
-        if gl.face_dict_flag == 0:
-
-            sql = "SELECT {0[0]},{0[1]} FROM person".format(model.person_col)
-
-            result = dict()
-            for row in self.__conn.execute(sql):
-                result[row[0]] = row[1]
-
-            gl.face_dict = result
-            gl.face_dict_flag = 1
-
-        else:
-
-            sql = "SELECT * FROM person WHERE {0[0]} = (SELECT MAX({0[0]}) FROM Person)".format(model.person_col)
-
-            for row in self.__conn.execute(sql):
-                gl.face_dict[row[0]] = row[1]
+    # def updateGlFaceLib(self):
+    #
+    #     # 先判断是更新最新记录还是全部记录
+    #     if gl.face_dict_flag == 0:
+    #
+    #         sql = "SELECT {0[0]},{0[1]} FROM person".format(model.person_col)
+    #
+    #         result = dict()
+    #         for row in self.__conn.execute(sql):
+    #             result[row[0]] = row[1]
+    #
+    #         gl.face_dict = result
+    #         gl.face_dict_flag = 1
+    #
+    #     else:
+    #
+    #         sql = "SELECT * FROM person WHERE {0[0]} = (SELECT MAX({0[0]}) FROM Person)".format(model.person_col)
+    #
+    #         for row in self.__conn.execute(sql):
+    #             gl.face_dict[row[0]] = row[1]
 
 
 
@@ -97,6 +114,8 @@ if __name__ == '__main__':
 
     p = PersonDaoImpl()
 
+    print(p.getAllPersonFace())
+    print(p.getLastPersonFace())
     # # geyAllPerson测试
     # print(p.getAllPerson())
 

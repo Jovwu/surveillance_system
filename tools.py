@@ -27,6 +27,20 @@ def getCurTime():
      # print(now)
      return now
 
+# 列表转str
+def list2Str(list):
+    return str(list).strip('[]')
+
+# str转列表
+def str2List(str):
+    colist = str.split(' ')
+    orgList = list()
+    for i in colist:
+        if i == '':
+            continue
+        else:
+            orgList.append(float(i))
+    return orgList
 
 
 if __name__ == '__main__':

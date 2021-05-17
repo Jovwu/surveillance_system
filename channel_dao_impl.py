@@ -70,6 +70,23 @@ class ChannelDaoImpl:
 
         return  result
 
+    # 返回通道业务类型
+    def getChannelServiceClass(self,arg):
+
+        sql = ""
+        if arg is "features":
+            sql = "SELECT * FROM features;"
+        elif arg == "mode":
+            sql = "SELECT * FROM mode;"
+        elif arg == "personClass":
+            sql = "SELECT * FROM personclass;"
+
+        result = dict()
+        for row in self.__conn.execute(sql):
+            result[row[0]] = row[1]
+        return result
+
+
 if __name__ == '__main__':
 
     p = ChannelDaoImpl()
@@ -77,3 +94,5 @@ if __name__ == '__main__':
     print(p.getFeaturesByChannelID(1001))
     print(p.getChannelCount(2))
     print(p.getAllChannelIDByClass(2))
+    print(p.getChannelServiceClass("mode"))
+    print(p.getChannelServiceClass("features"))

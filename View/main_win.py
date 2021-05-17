@@ -13,19 +13,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow
 
 from View.MyQLabelImpl import MyQLabel
+from View.add_win import AddPersonForm
 
-# 通道模式：
-modeDict = {
-    1:"监控模式",
-    2:"教室打卡模式",
-    3:"宿舍闸机模式(进)",
-    4:"宿舍闸机模式(出)"
-}
-# 通道功能
-featuresDict = {
-    1:"口罩识别",
-    2:"陌生人识别"
-}
 
 class Ui_main_win(object):
     def setupUi(self, main_win):
@@ -257,6 +246,36 @@ class Ui_main_win(object):
         self.gridLayoutWidget_4 = QtWidgets.QWidget(self.person_tab)
         self.gridLayoutWidget_4.setGeometry(QtCore.QRect(10, 10, 891, 371))
         self.gridLayoutWidget_4.setObjectName("gridLayoutWidget_4")
+
+        # self.P_gl = QtWidgets.QGridLayout(self.gridLayoutWidget_4)
+        # self.P_gl.setContentsMargins(0, 0, 0, 0)
+        # self.P_gl.setObjectName("P_gl")
+        # self.P_search_hl = QtWidgets.QHBoxLayout()
+        # self.P_search_hl.setObjectName("P_search_hl")
+        # spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        # self.P_search_hl.addItem(spacerItem)
+        # self.P_search_label = QtWidgets.QLabel(self.gridLayoutWidget_4)
+        # self.P_search_label.setObjectName("P_search_label")
+        # self.P_search_hl.addWidget(self.P_search_label)
+        # self.P_search_lineedit = QtWidgets.QLineEdit(self.gridLayoutWidget_4)
+        # self.P_search_lineedit.setObjectName("P_search_lineedit")
+        # self.P_search_hl.addWidget(self.P_search_lineedit)
+        # self.P_search_btn = QtWidgets.QPushButton(self.gridLayoutWidget_4)
+        # self.P_search_btn.setObjectName("P_search_btn")
+        # self.P_search_hl.addWidget(self.P_search_btn)
+        # spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        # self.P_search_hl.addItem(spacerItem1)
+        # self.P_search_hl.setStretch(0, 8)
+        # self.P_search_hl.setStretch(1, 1)
+        # self.P_search_hl.setStretch(2, 5)
+        # self.P_search_hl.setStretch(3, 2)
+        # self.P_search_hl.setStretch(4, 8)
+        # self.P_gl.addLayout(self.P_search_hl, 0, 0, 1, 1)
+        # self.P_data_table = QtWidgets.QTableWidget(self.gridLayoutWidget_4)
+        # self.P_data_table.setObjectName("P_data_table")
+        # self.P_data_table.setColumnCount(0)
+        # self.P_data_table.setRowCount(0)
+        # self.P_gl.addWidget(self.P_data_table, 1, 0, 1, 1)
         self.P_gl = QtWidgets.QGridLayout(self.gridLayoutWidget_4)
         self.P_gl.setContentsMargins(0, 0, 0, 0)
         self.P_gl.setObjectName("P_gl")
@@ -273,19 +292,25 @@ class Ui_main_win(object):
         self.P_search_btn = QtWidgets.QPushButton(self.gridLayoutWidget_4)
         self.P_search_btn.setObjectName("P_search_btn")
         self.P_search_hl.addWidget(self.P_search_btn)
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.P_search_hl.addItem(spacerItem1)
-        self.P_search_hl.setStretch(0, 8)
-        self.P_search_hl.setStretch(1, 1)
+        self.P_add_btn = QtWidgets.QPushButton(self.gridLayoutWidget_4)
+        self.P_add_btn.setObjectName("P_add_btn")
+        self.P_search_hl.addWidget(self.P_add_btn)
+        self.P_reset_btn = QtWidgets.QPushButton(self.gridLayoutWidget_4)
+        self.P_reset_btn.setObjectName("P_reset_btn")
+        self.P_search_hl.addWidget(self.P_reset_btn)
+        self.P_search_hl.setStretch(0, 9)
         self.P_search_hl.setStretch(2, 5)
         self.P_search_hl.setStretch(3, 2)
-        self.P_search_hl.setStretch(4, 8)
+        self.P_search_hl.setStretch(4, 2)
+        self.P_search_hl.setStretch(5, 2)
         self.P_gl.addLayout(self.P_search_hl, 0, 0, 1, 1)
         self.P_data_table = QtWidgets.QTableWidget(self.gridLayoutWidget_4)
         self.P_data_table.setObjectName("P_data_table")
         self.P_data_table.setColumnCount(0)
         self.P_data_table.setRowCount(0)
         self.P_gl.addWidget(self.P_data_table, 1, 0, 1, 1)
+
+
         self.main_tab.addTab(self.person_tab, "")
         self.setting_tab = QtWidgets.QWidget()
         self.setting_tab.setObjectName("setting_tab")
@@ -330,8 +355,14 @@ class Ui_main_win(object):
         self.pushButton_2.setText(_translate("main_win", "重置"))
         self.pushButton_3.setText(_translate("main_win", "数据导出"))
         self.main_tab.setTabText(self.main_tab.indexOf(self.data_tab), _translate("main_win", "数据管理"))
+
+        # self.P_search_label.setText(_translate("main_win", "搜索"))
+        # self.P_search_btn.setText(_translate("main_win", "确定"))
         self.P_search_label.setText(_translate("main_win", "搜索"))
         self.P_search_btn.setText(_translate("main_win", "确定"))
+        self.P_add_btn.setText(_translate("main_win", "添加人员"))
+        self.P_reset_btn.setText(_translate("main_win", "重置"))
+
         self.main_tab.setTabText(self.main_tab.indexOf(self.person_tab), _translate("main_win", "人员管理"))
         self.main_tab.setTabText(self.main_tab.indexOf(self.setting_tab), _translate("main_win", "系统设置"))
 
@@ -371,7 +402,7 @@ class MyMainForm(QMainWindow, Ui_main_win):
         self.M_frame_label = MyQLabel(self.gridLayoutWidget,channelDict=self.channelDict)
         self.M_frame_label.setObjectName("M_frame_label")
         self.M_gridLayout.addWidget(self.M_frame_label, 0, 1, 1, 1)
-        self.M_frame_label.setText("M_label")
+
         self.labelDict["M_label"] = self.M_frame_label
         # 设置A_label
         self.setGLbyLabel("A_label")
@@ -459,6 +490,7 @@ class MyMainForm(QMainWindow, Ui_main_win):
         # 设置连接信号
         self.connect()
 
+
     #设置监控tab
     def set_M_tab(self):
         # 初始化combox赋值
@@ -467,23 +499,27 @@ class MyMainForm(QMainWindow, Ui_main_win):
         for channelID in channelList:
             self.M_channel_choice_combox.addItem(str(channelID))
         self.M_channel_choice_combox.setCurrentIndex(0)
-
-
-
+        self.lastComboxChannelID = int(self.M_channel_choice_combox.currentText())
 
 
     def connect(self):
         self.main_tab.currentChanged['int'].connect(self.tabfun)
         self.M_channel_choice_combox.currentIndexChanged.connect(self.M_tab_combox_change)
-
-
+        self.P_add_btn.clicked.connect(self.P_add_person)
 
 
     # 设置M_tab_combox选择事件
-    def M_tab_combox_change(self, i):
+    def M_tab_combox_change(self):
+
+        # 设置上一次label
+        self.ChannelRefreshThreadDict[self.lastComboxChannelID].setLabelFlag(2)
+
         # 获取当前的index
         channelID = int(self.M_channel_choice_combox.currentText())
         self.ChannelRefreshThreadDict[channelID].setLabelFlag(1)
+
+        self.lastComboxChannelID = channelID
+
 
         # 填充信息
         # 填充name
@@ -491,18 +527,25 @@ class MyMainForm(QMainWindow, Ui_main_win):
         # area
         self.channel_area_show_label.setText(self.channelDict[channelID]["info"][1])
         # mode
-        #self.channel_mode_show_label.setText(modeDict[int(self.channelDict[channelID]["info"][2])])
+        self.channel_mode_show_label.setText(self.channelDict[channelID]["info"][4])
         # features
+        featuresList = self.channelDict[channelID]["info"][5]
+        if len(featuresList) == 0:
+            self.M_channel_features_show_label.setText("暂无功能")
+        else:
+            str = ','
+            self.M_channel_features_show_label.setText(str.join(featuresList))
 
 
     def tabfun(self,index):
 
         # 监控模式
         if index == 0:
-            # 取得combox的当前通道id
-            channelID = int(self.M_channel_choice_combox.currentText())
-            # 去找
-            self.ChannelRefreshThreadDict[channelID].setLabelFlag(1)
+            # # 取得combox的当前通道id
+            # channelID = int(self.M_channel_choice_combox.currentText())
+            # # 去找
+            # self.ChannelRefreshThreadDict[channelID].setLabelFlag(1)
+            self.M_tab_combox_change()
         elif index == 1:#教室模式
             # 取得id列表
             channelIDList = self.labelDict["labelClass"]["class"]
@@ -520,6 +563,13 @@ class MyMainForm(QMainWindow, Ui_main_win):
             channelIDList = self.labelDict["labelClass"]["all"]
             for channelID in channelIDList:
                 self.ChannelRefreshThreadDict[channelID].setLabelFlag(3)
+
+
+    # p_tab
+    # 设置添加用户事件
+    def P_add_person(self):
+        self.add_form = AddPersonForm(self.channelDict)
+        self.add_form.show()
 
 
 
