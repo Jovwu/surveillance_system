@@ -11,7 +11,7 @@ class MySqlConn:
 
     # 初始化
     def __init__(self):
-        self.__conn = sqlite3.connect("xmlg.db")
+        self.__conn = sqlite3.connect("xmlg.db",check_same_thread=False)
 
         # Converts np.array to TEXT when inserting
         sqlite3.register_adapter(numpy.ndarray, self.adapt_array)

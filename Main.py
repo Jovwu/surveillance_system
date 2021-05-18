@@ -26,6 +26,29 @@ from View.main_win import MyMainForm
 from channel_dao_impl import ChannelDaoImpl
 from person_dao_impl import PersonDaoImpl
 
+class DataGetThread(threading.Thread):
+
+    def __init__(self, channelDict):
+        threading.Thread.__init__(self)
+        self.daemon = True
+        self.channelDict = channelDict
+        self.PDI = PersonDaoImpl()
+
+    def run(self):
+        print("DataGetThread已打开")
+        while True:
+            # 等待唤醒
+            self.channelDict["DataGetThreadEvent"].wait()
+            # 去取
+            while len(self.channelDict["DataGetThreadContent"]) != 0:
+                # 取出命令
+                order = self.channelDict["DataGetThreadContent"].pop()
+                print("DataGetThread}接收到任务：{0}", format(order))
+                if order == "updateFaceLib":
+                    CHANNEL_DICT["faceLib"] = self.PDI.getAllPersonFace()
+
+
+            self.channelDict["DataGetThreadEvent"].clear()
 
 class RefreshThread(QThread):
     signal = pyqtSignal()
@@ -245,11 +268,19 @@ if __name__ == '__main__':
     CHANNEL_DICT["mode"] = MANAGE.dict()
     CHANNEL_DICT["personClass"] = MANAGE.dict()
     CHANNEL_DICT["faceLib"] = MANAGE.dict()
+    CHANNEL_DICT["DataGetThreadEvent"] = MANAGE.Event()
+    CHANNEL_DICT["DataGetThreadContent"] = MANAGE.list()
+    CHANNEL_DICT["personForTabel"] = MANAGE.list()
+    CHANNEL_DICT["addr_dorm"] = MANAGE.dict()
+    CHANNEL_DICT["addr_class"] = MANAGE.dict()
 
     # 初始化字典内容
     CHANNEL_DICT["features"] = CDI.getChannelServiceClass("features")
     CHANNEL_DICT["mode"] = CDI.getChannelServiceClass("mode")
     CHANNEL_DICT["personClass"] = CDI.getChannelServiceClass("personClass")
+    CHANNEL_DICT["personForTabel"] = PDI.getPersonForTable()
+    CHANNEL_DICT["addr_dorm"] = CDI.getAddrByClass("dorm")
+    CHANNEL_DICT["addr_class"] = CDI.getAddrByClass("class")
     # 加载全局人脸库
     CHANNEL_DICT["faceLib"] = PDI.getAllPersonFace()
 
@@ -268,8 +299,10 @@ if __name__ == '__main__':
     LabelDict["labelClass"]["dormin"] = CDI.getAllChannelIDByClass(3)
     LabelDict["labelClass"]["dormout"] = CDI.getAllChannelIDByClass(4)
 
-    # 初始化字典内容
-
+    # 初始化数据更新线程
+    print("创建数据更新线程")
+    dataGetThread = DataGetThread(CHANNEL_DICT)
+    dataGetThread.start()
 
     print("创建通道刷新线程字典")
     ChannelRefreshThreadDict = dict()

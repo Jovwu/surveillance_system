@@ -86,13 +86,29 @@ class ChannelDaoImpl:
             result[row[0]] = row[1]
         return result
 
+    # 根据类型返回地址
+    def getAddrByClass(self,arg):
+
+        sql = ""
+        if arg is "dorm":
+            sql = "SELECT * FROM addr where addr_class = 'dorm';"
+        elif arg == "class":
+            sql = "SELECT * FROM addr where addr_class = 'class';"
+
+        result = dict()
+        result[0] = "None"
+        for row in self.__conn.execute(sql):
+            result[row[0]] = row[1]
+        return result
+
 
 if __name__ == '__main__':
 
     p = ChannelDaoImpl()
-    print(p.getAllChannel()[0][0])
-    print(p.getFeaturesByChannelID(1001))
-    print(p.getChannelCount(2))
-    print(p.getAllChannelIDByClass(2))
-    print(p.getChannelServiceClass("mode"))
-    print(p.getChannelServiceClass("features"))
+    # print(p.getAllChannel()[0][0])
+    # print(p.getFeaturesByChannelID(1001))
+    # print(p.getChannelCount(2))
+    # print(p.getAllChannelIDByClass(2))
+    # print(p.getChannelServiceClass("mode"))
+    # print(p.getChannelServiceClass("features"))
+    print(p.getAddrByClass("dorm"))

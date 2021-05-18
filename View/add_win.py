@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox
 import person_dao_impl
 from face import getFaceLocations, getFaceEncode, getFaceOf
 from model import Person
+from tools import getKeyByValue, saveRGB2JPG, getCurDateTime
 
 
 class Ui_add_win(object):
@@ -98,17 +99,32 @@ class AddPersonForm(QMainWindow, Ui_add_win):
         super(AddPersonForm, self).__init__(parent)
         self.setupUi(self)
         self.channelDict = channelDict
+
+        self.labelSize = (int(self.ADD_frame_label.width()), int(self.ADD_frame_label.height()))
+
+        self.PDI = person_dao_impl.PersonDaoImpl()
+
+
         self.frame = None
         self.faceEncode = None
         self.img = None
-        self.labelSize = (int(self.ADD_frame_label.width()), int(self.ADD_frame_label.height()))
+
+        self.init()
 
         self.connect()
+
+    def init(self):
+        # 更新combox
+        for values in self.channelDict["personClass"].values():
+            self.ADD_comboBox.addItem(values)
+        self.ADD_comboBox.setCurrentIndex(0)
 
     def connect(self):
         self.ADD_cameraface_btn.clicked.connect(self.getCameraFace)
         self.ADD_imageface_btn.clicked.connect(self.getFileFace)
         self.ADD_OK.clicked.connect(self.OK_btn)
+        self.ADD_cancel.clicked.connect(self.close)
+
     # 图片输入
     def getFileFace(self):
         imgName, imgType = QFileDialog.getOpenFileName(self, "打开图片", "", "*.jpg;;*.png;;All Files(*)")
@@ -135,6 +151,7 @@ class AddPersonForm(QMainWindow, Ui_add_win):
                            shrink.shape[1] * 3,
                            QImage.Format_RGB888)
             self.ADD_frame_label.setPixmap(QPixmap().fromImage(image))
+            self.img = img
 
         self.openAll()
 
@@ -144,6 +161,7 @@ class AddPersonForm(QMainWindow, Ui_add_win):
         # 打开人脸识别框
         cap = cv2.VideoCapture(2)
         faceLocation = None
+        img = None
         flag = False
         while (1):
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -192,6 +210,7 @@ class AddPersonForm(QMainWindow, Ui_add_win):
                                       shrink.shape[1] * 3,
                                       QImage.Format_RGB888)
         self.ADD_frame_label.setPixmap(QPixmap().fromImage(image))
+        self.img = img
         # 收获到人脸判断是否存在
         # 获取人脸后退出
         # 将人脸写到label
@@ -200,10 +219,7 @@ class AddPersonForm(QMainWindow, Ui_add_win):
 
     def OK_btn(self):
         # 判断人脸是否存在
-        print("人口开始")
-        print("人脸库内容：{0}".format(self.channelDict["faceLib"]))
         faceid = getFaceOf(self.faceEncode,self.channelDict["faceLib"])
-        print("人口结束:{0}".format(faceid))
         if faceid != 0:
             QMessageBox.warning(self, '警告', '该人脸已存在！', QMessageBox.Yes)
             return
@@ -211,7 +227,25 @@ class AddPersonForm(QMainWindow, Ui_add_win):
             QMessageBox.warning(self, '警告', '请输入信息！', QMessageBox.Yes)
         elif faceid == 0:
             PDI = person_dao_impl.PersonDaoImpl()
-            PDI.addPerson(Person(self.faceEncode, self.ADD_name_edit.text(), 1, "pic"))
+            # 获得personClass的ID
+            personClassID = getKeyByValue(self.channelDict["personClass"],self.ADD_comboBox.currentText())
+            # 先添加人员
+            PDI.addPerson(Person(self.faceEncode, self.ADD_name_edit.text(), int(personClassID), "null"))
+            # 获得最后一条记录
+            personID = int(self.PDI.getLastPersonID())
+            # 保存图片 然后获得图片路径
+            file_path = saveRGB2JPG(self.img,"person/{0}_{1}".format(personID,getCurDateTime()))
+            # 再填充人员图片信息
+            PDI.setPersonPicPath(personID,file_path)
+
+            # 实时更新人脸库
+            self.channelDict["DataGetThreadContent"].append("updateFaceLib")
+            self.channelDict["DataGetThreadEvent"].set()
+
+            QMessageBox.information(self, '恭喜', '注册成功！', QMessageBox.Yes)
+            self.closeAll()
+
+
 
     def closeAll(self):
         self.ADD_frame_label.setText("请点击下方按钮获取人脸")
@@ -223,6 +257,8 @@ class AddPersonForm(QMainWindow, Ui_add_win):
         self.frame = None
         self.faceEncode = None
         self.img = None
+
+
 
     def openAll(self):
         self.ADD_name_edit.setEnabled(True)
